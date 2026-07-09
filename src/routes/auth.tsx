@@ -23,6 +23,29 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const handleResend = async () => {
+    if (!email) {
+      toast.error("Enter your email first");
+      return;
+    }
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) throw error;
+      toast.success("Confirmation email resent — check your inbox");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to resend";
+      toast.error(msg);
+    } finally {
+      setResending(false);
+    }
+  };
   const claimOwner = useServerFn(claimOwnerAdmin);
 
   const redirectByRole = async (userId: string) => {
@@ -144,12 +167,20 @@ function AuthPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-3">
           <button
             onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-primary transition"
+            className="block w-full font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-primary transition"
           >
             {mode === "signin" ? "› Request new clearance" : "› Existing operative? Sign in"}
+          </button>
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={resending}
+            className="block w-full font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-primary transition disabled:opacity-50"
+          >
+            {resending ? "› Transmitting…" : "› Resend confirmation email"}
           </button>
         </div>
       </div>
