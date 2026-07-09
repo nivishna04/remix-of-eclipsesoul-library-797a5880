@@ -23,6 +23,29 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const handleResend = async () => {
+    if (!email) {
+      toast.error("Enter your email first");
+      return;
+    }
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) throw error;
+      toast.success("Confirmation email resent — check your inbox");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to resend";
+      toast.error(msg);
+    } finally {
+      setResending(false);
+    }
+  };
   const claimOwner = useServerFn(claimOwnerAdmin);
 
   const redirectByRole = async (userId: string) => {
